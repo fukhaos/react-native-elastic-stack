@@ -1,7 +1,10 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { PanResponder, View, Dimensions, Animated } from 'react-native';
+import { Easing } from 'react-native';
+import {
+  PanResponder, View, Dimensions, Animated,
+} from 'react-native';
 /* eslint-enable import/no-extraneous-dependencies */
 
 const window = Dimensions.get('window');
@@ -70,15 +73,20 @@ export default class ElasticStack extends Component {
   };
 
   pan = new Animated.ValueXY();
+
   scale = new Animated.Value(0);
+
   opacity = new Animated.Value(0);
+
   panSwiping = new Animated.ValueXY();
+
   isStackEnded = false;
 
   constructor(props) {
     super(props);
 
     this.state = {
+      canChange: true,
       directions: {
         top: props.directions[0],
         left: props.directions[1],
@@ -128,13 +136,45 @@ export default class ElasticStack extends Component {
     });
   }
 
+  goBack = () => {
+    this.resetPanAndScale();
+    this.setItemIndex(this.activeItemIndex - 1, () => {}, false);
+
+    this.pan.setValue({ x: 0, y: -100 });
+    this.panSwiping.setValue({ x: 0, y: -100 });
+    this.onPanResponderRelease();
+  };
+
+  moveNext = (liked) => {
+    if (this.state.canChange == false) return;
+    this.setState({ canChange: false });
+    const anime = {
+      duration: 400,
+      easing: Easing.exp,
+      toValue: {
+        x: liked ? 100 : -100,
+        y: 0,
+      },
+    };
+
+    Animated.parallel([
+      Animated.timing(this.pan, anime),
+      Animated.timing(this.panSwiping, anime),
+    ]).start(() => {
+      this.onPanResponderRelease();
+      this.setState({ canChange: true });
+    });
+  };
+
   componentWillUnmount() {
     this.pan.x.removeAllListeners();
     this.pan.y.removeAllListeners();
   }
 
   renderElastickItems() {
-    const { items, itemWidth, itemHeight, infinite, renderItem, elastickItemsCount } = this.props;
+    const {
+      items, itemWidth, itemHeight, infinite, renderItem, elastickItemsCount,
+    } = this.props;
     const itemsLength = items.length;
 
     if (!infinite && this.isStackEnded) {
@@ -199,7 +239,7 @@ export default class ElasticStack extends Component {
     });
 
     // eslint-disable-next-line no-restricted-properties
-    const translateRange = TRANSFORM_RANGE / 2 * Math.pow(reduceTransformBy, itemIndex);
+    const translateRange = (TRANSFORM_RANGE / 2) * Math.pow(reduceTransformBy, itemIndex);
     const translateX = currentPan.x.interpolate({
       inputRange: [-TRANSFORM_RANGE, 0, TRANSFORM_RANGE],
       outputRange: [-translateRange, 0, translateRange],
@@ -250,6 +290,8 @@ export default class ElasticStack extends Component {
   };
 
   onPanResponderMove = (e, { dx, dy }) => {
+    console.log(`${dx} - ${dy}`);
+
     this.pan.setValue({ x: dx, y: dy });
     this.panSwiping.setValue({ x: dx, y: dy });
   };
@@ -273,8 +315,8 @@ export default class ElasticStack extends Component {
       stackEffectHeight,
       reduceTransformBy,
     } = this.props;
-    const animatedValueX = this.animatedValueX;
-    const animatedValueY = this.animatedValueY;
+    const { animatedValueX } = this;
+    const { animatedValueY } = this;
 
     const isSwipingLeft = animatedValueX < -distDrag && directions.left;
     const isSwipingRight = animatedValueX > distDrag && directions.right;
@@ -295,16 +337,16 @@ export default class ElasticStack extends Component {
       }
 
       const scaleRange = 1 - reduceScaleBy;
-      const translateRange = TRANSFORM_RANGE / 2 * reduceTransformBy;
+      const translateRange = (TRANSFORM_RANGE / 2) * reduceTransformBy;
       const scaledHeightDiff = (itemHeight - itemHeight * scaleRange) / 2;
-      const zeroRange = scaledHeightDiff + stackEffectHeight;
+      const zeroRange = scaledHeightDiff * stackEffectHeight;
       const percentage = translateRange / (translateRange + zeroRange);
 
       Animated.parallel([
         Animated.spring(this.scale, { toValue: 1 }),
         Animated.spring(this.opacity, { toValue: 1 }),
         Animated.spring(this.pan, {
-          toValue: { x: 0, y: TRANSFORM_RANGE * (percentage - 1) - zeroRange },
+          toValue: { x: 0, y: TRANSFORM_RANGE * (percentage - 1) },
         }),
         Animated.spring(this.panSwiping, {
           toValue: {
@@ -374,9 +416,7 @@ export default class ElasticStack extends Component {
     this.opacity.setValue(0);
   };
 
-  static calculateNextItemIndex = (itemsLength, itemIndex) =>
-    itemIndex >= itemsLength - 1 ? itemIndex - (itemsLength - 1) : itemIndex + 1;
+  static calculateNextItemIndex = (itemsLength, itemIndex) => itemIndex >= itemsLength - 1 ? itemIndex - (itemsLength - 1) : itemIndex + 1;
 
-  static calculatePreviousItemIndex = (itemsLength, activeItemIndex) =>
-    activeItemIndex === 0 ? itemsLength - 1 : activeItemIndex - 1;
+  static calculatePreviousItemIndex = (itemsLength, activeItemIndex) => activeItemIndex === 0 ? itemsLength - 1 : activeItemIndex - 1;
 }
