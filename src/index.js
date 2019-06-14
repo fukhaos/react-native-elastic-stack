@@ -64,6 +64,7 @@ export default class ElasticStack extends Component {
     reduceDegreeBy: 0.65,
     reduceOpacityBy: 0.2,
     activeItemIndex: 0,
+    activeItemIndexReal: 0,
     reduceTransformBy: 0.7,
     stackEffectHeight: 5,
     elastickItemsCount: 3,
@@ -99,6 +100,7 @@ export default class ElasticStack extends Component {
     this.animatedValueY = 0;
 
     this.activeItemIndex = props.activeItemIndex;
+    this.activeItemIndexReal = props.activeItemIndex;
 
     this.pan.x.addListener(this.onXChange);
     this.pan.y.addListener(this.onYChange);
@@ -145,9 +147,7 @@ export default class ElasticStack extends Component {
     this.onPanResponderRelease();
   };
 
-  getCurrent = ()=>{
-    return this.activeItemIndex;
-  }
+  getCurrent = () => this.activeItemIndexReal;
 
   moveNext = (liked) => {
     if (this.state.canChange == false) return;
@@ -361,11 +361,11 @@ export default class ElasticStack extends Component {
       ]).start(() => {
         this.incrementItemIndex(onSwipeDirectionCallback);
       });
-      if (this.activeItemIndex + 1 === this.props.items.length){
+
+      this.activeItemIndexReal = this.activeItemIndex + 1;
+      if (this.activeItemIndexReal === this.props.items.length) {
         this.props.onStackEnded();
       }
-      
-
     } else {
       Animated.parallel([
         Animated.spring(this.pan, { toValue: { x: 0, y: 0 } }),
@@ -385,11 +385,11 @@ export default class ElasticStack extends Component {
   onStartShouldSetPanResponderCapture = () => true;
 
   incrementItemIndex = (onSwipedToDirection) => {
-    let newActiveItemIndex = this.activeItemIndex + 1;
+    const newActiveItemIndex = this.activeItemIndex + 1;
     let isStackEnded = false;
 
     if (newActiveItemIndex === this.props.items.length) {
-      //newActiveItemIndex = 0;
+      // newActiveItemIndex = 0;
       this.props.onStackEnded();
       isStackEnded = true;
     }
@@ -401,6 +401,7 @@ export default class ElasticStack extends Component {
   setItemIndex = (activeItemIndex, onSwipedToDirection, isStackEnded) => {
     this.isStackEnded = isStackEnded;
     this.activeItemIndex = activeItemIndex;
+    this.activeItemIndexReal = activeItemIndex;
 
     const prevItemIndex = ElasticStack.calculatePreviousItemIndex(
       this.props.items.length,
@@ -415,7 +416,7 @@ export default class ElasticStack extends Component {
       this.props.onStackEnded();
     }
 
-    this.setState({ activeItemIndex });
+    this.setState({ activeItemIndex});
   };
 
   resetPanAndScale = () => {
