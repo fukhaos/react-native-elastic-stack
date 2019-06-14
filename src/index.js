@@ -361,6 +361,11 @@ export default class ElasticStack extends Component {
       ]).start(() => {
         this.incrementItemIndex(onSwipeDirectionCallback);
       });
+      if (this.activeItemIndex + 1 === this.props.items.length){
+        this.props.onStackEnded();
+      }
+      
+
     } else {
       Animated.parallel([
         Animated.spring(this.pan, { toValue: { x: 0, y: 0 } }),
@@ -384,7 +389,8 @@ export default class ElasticStack extends Component {
     let isStackEnded = false;
 
     if (newActiveItemIndex === this.props.items.length) {
-      newActiveItemIndex = 0;
+      //newActiveItemIndex = 0;
+      this.props.onStackEnded();
       isStackEnded = true;
     }
 
