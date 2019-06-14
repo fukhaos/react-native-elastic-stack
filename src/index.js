@@ -145,6 +145,10 @@ export default class ElasticStack extends Component {
     this.onPanResponderRelease();
   };
 
+  getCurrent = ()=>{
+    return this.activeItemIndex;
+  }
+
   moveNext = (liked) => {
     if (this.state.canChange == false) return;
     this.setState({ canChange: false });
