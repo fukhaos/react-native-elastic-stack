@@ -1,10 +1,8 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Easing } from 'react-native';
-import {
-  PanResponder, View, Dimensions, Animated,
-} from 'react-native';
+import { Easing, PanResponder, View, Dimensions, Animated } from 'react-native';
+
 /* eslint-enable import/no-extraneous-dependencies */
 
 const window = Dimensions.get('window');
@@ -40,7 +38,7 @@ export default class ElasticStack extends Component {
     elastickItemsCount: PropTypes.number,
     itemBackgroundColor: PropTypes.string,
     onPanResponderGrant: PropTypes.func,
-    onPanResponderRelease: PropTypes.func,
+    onPanResponderRelease: PropTypes.func
   };
 
   static defaultProps = {
@@ -64,12 +62,13 @@ export default class ElasticStack extends Component {
     reduceDegreeBy: 0.65,
     reduceOpacityBy: 0.2,
     activeItemIndex: 0,
+    activeItemIndexReal: 0,
     reduceTransformBy: 0.7,
     stackEffectHeight: 5,
     elastickItemsCount: 3,
     onPanResponderGrant: emptyFunc,
     itemBackgroundColor: 'rgba(0,0,0,0)',
-    onPanResponderRelease: emptyFunc,
+    onPanResponderRelease: emptyFunc
   };
 
   pan = new Animated.ValueXY();
@@ -91,14 +90,15 @@ export default class ElasticStack extends Component {
         top: props.directions[0],
         left: props.directions[1],
         bottom: props.directions[2],
-        right: props.directions[3],
-      },
+        right: props.directions[3]
+      }
     };
 
     this.animatedValueX = 0;
     this.animatedValueY = 0;
 
     this.activeItemIndex = props.activeItemIndex;
+    this.activeItemIndexReal = props.activeItemIndex;
 
     this.pan.x.addListener(this.onXChange);
     this.pan.y.addListener(this.onYChange);
@@ -114,10 +114,9 @@ export default class ElasticStack extends Component {
           {
             position: 'relative',
             width: this.props.itemWidth,
-            height: this.props.itemHeight,
-          },
-        ]}
-      >
+            height: this.props.itemHeight
+          }
+        ]}>
         {this.renderElastickItems()}
 
         {this.props.children}
@@ -131,8 +130,8 @@ export default class ElasticStack extends Component {
         top: nextProps.directions[0],
         left: nextProps.directions[1],
         bottom: nextProps.directions[2],
-        right: nextProps.directions[3],
-      },
+        right: nextProps.directions[3]
+      }
     });
   }
 
@@ -145,7 +144,9 @@ export default class ElasticStack extends Component {
     this.onPanResponderRelease();
   };
 
-  moveNext = (liked) => {
+  getCurrent = () => this.activeItemIndexReal;
+
+  moveNext = liked => {
     if (this.state.canChange == false) return;
     this.setState({ canChange: false });
     const anime = {
@@ -153,14 +154,11 @@ export default class ElasticStack extends Component {
       easing: Easing.exp,
       toValue: {
         x: liked ? 100 : -100,
-        y: 0,
-      },
+        y: 0
+      }
     };
 
-    Animated.parallel([
-      Animated.timing(this.pan, anime),
-      Animated.timing(this.panSwiping, anime),
-    ]).start(() => {
+    Animated.parallel([Animated.timing(this.pan, anime), Animated.timing(this.panSwiping, anime)]).start(() => {
       this.onPanResponderRelease();
       this.setState({ canChange: true });
     });
@@ -172,9 +170,7 @@ export default class ElasticStack extends Component {
   }
 
   renderElastickItems() {
-    const {
-      items, itemWidth, itemHeight, infinite, renderItem, elastickItemsCount,
-    } = this.props;
+    const { items, itemWidth, itemHeight, infinite, renderItem, elastickItemsCount } = this.props;
     const itemsLength = items.length;
 
     if (!infinite && this.isStackEnded) {
@@ -182,10 +178,7 @@ export default class ElasticStack extends Component {
     }
 
     return Array.from({ length: elastickItemsCount }).map((_, i) => {
-      const itemIndex = ElasticStack.calculateNextItemIndex(
-        itemsLength,
-        this.activeItemIndex + (i - 1),
-      );
+      const itemIndex = ElasticStack.calculateNextItemIndex(itemsLength, this.activeItemIndex + (i - 1));
       const itemContent = items[itemIndex];
 
       if (!itemContent || (!infinite && itemIndex < this.activeItemIndex)) {
@@ -203,7 +196,7 @@ export default class ElasticStack extends Component {
     });
   }
 
-  calculateSwipableItemStyle = (itemIndex) => {
+  calculateSwipableItemStyle = itemIndex => {
     const {
       itemWidth,
       itemHeight,
@@ -213,7 +206,7 @@ export default class ElasticStack extends Component {
       reduceOpacityBy,
       stackEffectHeight,
       reduceTransformBy,
-      elastickItemsCount,
+      elastickItemsCount
     } = this.props;
 
     const isFirst = itemIndex === 0;
@@ -223,33 +216,33 @@ export default class ElasticStack extends Component {
     const rotateRange = rotateDegree * Math.pow(reduceDegreeBy, itemIndex);
     const rotate = currentPan.x.interpolate({
       inputRange: [-TRANSFORM_RANGE, 0, TRANSFORM_RANGE],
-      outputRange: [`${-rotateRange}deg`, '0deg', `${rotateRange}deg`],
+      outputRange: [`${-rotateRange}deg`, '0deg', `${rotateRange}deg`]
     });
 
     const opacityRange = 1 - reduceOpacityBy * itemIndex;
     const opacity = this.opacity.interpolate({
       inputRange: [0, 1],
-      outputRange: [isFirst ? 1 : opacityRange, isFirst ? 0 : opacityRange + reduceOpacityBy],
+      outputRange: [isFirst ? 1 : opacityRange, isFirst ? 0 : opacityRange + reduceOpacityBy]
     });
 
     const scaleRange = 1 - reduceScaleBy * itemIndex;
     const scale = this.scale.interpolate({
       inputRange: [0, 1],
-      outputRange: [scaleRange, scaleRange + reduceScaleBy],
+      outputRange: [scaleRange, scaleRange + reduceScaleBy]
     });
 
     // eslint-disable-next-line no-restricted-properties
     const translateRange = (TRANSFORM_RANGE / 2) * Math.pow(reduceTransformBy, itemIndex);
     const translateX = currentPan.x.interpolate({
       inputRange: [-TRANSFORM_RANGE, 0, TRANSFORM_RANGE],
-      outputRange: [-translateRange, 0, translateRange],
+      outputRange: [-translateRange, 0, translateRange]
     });
 
     const scaledHeightDiff = (itemHeight - itemHeight * scaleRange) / 2;
     const zeroRange = scaledHeightDiff + itemIndex * stackEffectHeight;
     const translateY = currentPan.y.interpolate({
       inputRange: [-TRANSFORM_RANGE, 0, TRANSFORM_RANGE],
-      outputRange: [-translateRange + zeroRange, zeroRange, translateRange + zeroRange],
+      outputRange: [-translateRange + zeroRange, zeroRange, translateRange + zeroRange]
     });
 
     return {
@@ -259,7 +252,7 @@ export default class ElasticStack extends Component {
       position: 'absolute',
       backgroundColor: this.props.itemBackgroundColor,
       opacity,
-      transform: [{ rotate }, { translateX }, { translateY }, { scale }],
+      transform: [{ rotate }, { translateX }, { translateY }, { scale }]
     };
   };
 
@@ -273,7 +266,7 @@ export default class ElasticStack extends Component {
       onStartShouldSetPanResponder: this.onStartShouldSetPanResponder,
       onPanResponderTerminationRequest: this.onPanResponderTerminationRequest,
       onMoveShouldSetPanResponderCapture: this.onMoveShouldSetPanResponderCapture,
-      onStartShouldSetPanResponderCapture: this.onStartShouldSetPanResponderCapture,
+      onStartShouldSetPanResponderCapture: this.onStartShouldSetPanResponderCapture
     });
   };
 
@@ -313,7 +306,7 @@ export default class ElasticStack extends Component {
       reduceScaleBy,
       onSwipedBottom,
       stackEffectHeight,
-      reduceTransformBy,
+      reduceTransformBy
     } = this.props;
     const { animatedValueX } = this;
     const { animatedValueY } = this;
@@ -346,21 +339,26 @@ export default class ElasticStack extends Component {
         Animated.spring(this.scale, { toValue: 1 }),
         Animated.spring(this.opacity, { toValue: 1 }),
         Animated.spring(this.pan, {
-          toValue: { x: 0, y: TRANSFORM_RANGE * (percentage - 1) },
+          toValue: { x: 0, y: TRANSFORM_RANGE * (percentage - 1) }
         }),
         Animated.spring(this.panSwiping, {
           toValue: {
             x: this.animatedValueX * 2,
-            y: this.animatedValueY * 2,
-          },
-        }),
+            y: this.animatedValueY * 2
+          }
+        })
       ]).start(() => {
         this.incrementItemIndex(onSwipeDirectionCallback);
       });
+
+      this.activeItemIndexReal = this.activeItemIndex + 1;
+      if (this.activeItemIndexReal === this.props.items.length) {
+        this.props.onStackEnded();
+      }
     } else {
       Animated.parallel([
         Animated.spring(this.pan, { toValue: { x: 0, y: 0 } }),
-        Animated.spring(this.panSwiping, { toValue: { x: 0, y: 0 } }),
+        Animated.spring(this.panSwiping, { toValue: { x: 0, y: 0 } })
       ]).start();
     }
   };
@@ -375,12 +373,13 @@ export default class ElasticStack extends Component {
 
   onStartShouldSetPanResponderCapture = () => true;
 
-  incrementItemIndex = (onSwipedToDirection) => {
-    let newActiveItemIndex = this.activeItemIndex + 1;
+  incrementItemIndex = onSwipedToDirection => {
+    const newActiveItemIndex = this.activeItemIndex + 1;
     let isStackEnded = false;
 
     if (newActiveItemIndex === this.props.items.length) {
-      newActiveItemIndex = 0;
+      // newActiveItemIndex = 0;
+      this.props.onStackEnded();
       isStackEnded = true;
     }
 
@@ -391,13 +390,11 @@ export default class ElasticStack extends Component {
   setItemIndex = (activeItemIndex, onSwipedToDirection, isStackEnded) => {
     this.isStackEnded = isStackEnded;
     this.activeItemIndex = activeItemIndex;
+    this.activeItemIndexReal = activeItemIndex;
 
-    const prevItemIndex = ElasticStack.calculatePreviousItemIndex(
-      this.props.items.length,
-      this.activeItemIndex,
-    );
+    const prevItemIndex = ElasticStack.calculatePreviousItemIndex(this.props.items.length, this.activeItemIndex);
 
-    this.props.onSwiped(prevItemIndex);
+    this.props.onSwiped(activeItemIndex);
 
     onSwipedToDirection(prevItemIndex);
 
@@ -416,7 +413,9 @@ export default class ElasticStack extends Component {
     this.opacity.setValue(0);
   };
 
-  static calculateNextItemIndex = (itemsLength, itemIndex) => itemIndex >= itemsLength - 1 ? itemIndex - (itemsLength - 1) : itemIndex + 1;
+  static calculateNextItemIndex = (itemsLength, itemIndex) =>
+    itemIndex >= itemsLength - 1 ? itemIndex - (itemsLength - 1) : itemIndex + 1;
 
-  static calculatePreviousItemIndex = (itemsLength, activeItemIndex) => activeItemIndex === 0 ? itemsLength - 1 : activeItemIndex - 1;
+  static calculatePreviousItemIndex = (itemsLength, activeItemIndex) =>
+    activeItemIndex === 0 ? itemsLength - 1 : activeItemIndex - 1;
 }
